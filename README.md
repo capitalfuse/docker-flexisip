@@ -1,6 +1,6 @@
 # The Dockerfile to build the docker image for sip server flexisip on Ubuntu 18.04
 
-ex) Hot to build the Docker image for flexisip from the Dockerfile
+ex) How to build the Docker image for flexisip from the Dockerfile
 ```
 $ docker build --no-cache -t linphone/flexisip:20190808 .
 ```
