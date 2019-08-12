@@ -11,6 +11,7 @@ $ docker build --no-cache -t linphone/flexisip:20190808 .
 RUN git clone https://gitlab.linphone.org/BC/public/flexisip.git --recursive --depth 1
 RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DCMAKE_PREFIX_PATH=/opt/belledonne-communications -DCMAKE_INSTALL_PREFIX=/opt/belledonne-communications -DSYSCONF_INSTALL_DIR=/etc && make
 ```
+```
   -DENABLE_REDIS=YES 
   -DENABLE_TRANSCODER=YES 
   -DENABLE_UNIT_TESTS=OFF 
@@ -24,3 +25,4 @@ RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DCMAKE_PREFIX_P
   -DENABLE_JWE_AUTH_PLUGIN=YES 
   -DENABLE_EXTERNAL_AUTH_PLUGIN=YES 
   -DENABLE_SOCI=YES"
+```
