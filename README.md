@@ -26,3 +26,5 @@ RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DCMAKE_PREFIX_P
   -DENABLE_EXTERNAL_AUTH_PLUGIN=YES 
   -DENABLE_SOCI=YES"
 ```
+**Reference**
+https://github.com/BelledonneCommunications/flexisip
