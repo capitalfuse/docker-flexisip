@@ -2,7 +2,7 @@
 
 ex) How to build the Docker image for flexisip from the Dockerfile
 ```
-$ docker build --no-cache -t linphone/flexisip:20190808 .
+$ docker build --squash --no-cache -t linphone/flexisip:20190808 .
 ```
 
 ***Build Options: Add options formatted as "-DENABLE_XXX=??" into the potition following "./prepare.py" at the "#get source code" section.***
