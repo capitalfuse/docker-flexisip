@@ -34,13 +34,11 @@ RUN apt-get update && \
     apt-get clean
 
 #get source code
-RUN git clone https://gitlab.linphone.org/BC/public/flexisip.git --recursive --depth 1 && \
-    cd flexisip && \
-    ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DENABLE_SNMP=YES -DENABLE_DOC=OFF -DENABLE_PROTOBUF=YES -DCMAKE_PREFIX_PATH=/opt/belledonne-communications -DCMAKE_INSTALL_PREFIX=/opt/belledonne-communications -DSYSCONF_INSTALL_DIR=/etc && \
-    make && \
-    mkdir -p /etc/opt/belledonne-communications/flexisip && \
-    mkdir -p /var/opt/belledonne-communications/log/flexisip && \
-    ln -s /etc/opt/belledonne-communications/flexisip /etc/flexisip
+RUN git clone https://gitlab.linphone.org/BC/public/flexisip.git --recursive --depth 1
+RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DENABLE_SNMP=YES -DENABLE_DOC=OFF -DENABLE_PROTOBUF=YES -DCMAKE_PREFIX_PATH=/opt/belledonne-communications -DCMAKE_INSTALL_PREFIX=/opt/belledonne-communications -DSYSCONF_INSTALL_DIR=/etc && make
+RUN mkdir -p /etc/opt/belledonne-communications/flexisip
+RUN mkdir -p /var/opt/belledonne-communications/log/flexisip
+RUN ln -s /etc/opt/belledonne-communications/flexisip /etc/flexisip
 
 # Add it to the default path
 ENV PATH=$PATH:/opt/belledonne-communications/bin
