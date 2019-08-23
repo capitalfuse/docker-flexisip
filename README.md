@@ -44,6 +44,7 @@ $ make flexisip-deb-build
 Run docker container
 ```
 $ docker run -dti --network host --name debian_flexisip gitlab.linphone.org:4567/bc/public/flexisip:debian20190822-deb 
+```
 
 go into the container
 ```
