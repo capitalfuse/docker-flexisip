@@ -1,14 +1,14 @@
-FROM debian
+FROM debian:stretch
 MAINTAINER  Jehan Monnier <jehan.monnier@linphone.org>
 
 # Prepare dependencies
 RUN apt-get update
-RUN apt-get install -y  xsdcxx gdb libmariadb2
+RUN apt-get install -y  xsdcxx gdb libmariadbclient-dev wget gnupg gnupg1 gnupg2
 
 # Get flexisip package
-COPY DEBS/*.deb /deb-packages/
-RUN apt-get install -y /deb-packages/bc-*.deb
-RUN rm -rf /deb-packages
+RUN echo "deb [arch=amd64] http://linphone.org/snapshots/debian stretch main" > /etc/apt/sources.list.d/belledonne.list
+RUN wget https://linphone.org/snapshots/debian/keyring.gpg -O - | apt-key add -
+RUN apt-get update && apt-get install -y bc-flexisip
 
 # Add it to the default path
 ENV PATH=$PATH:/opt/belledonne-communications/bin

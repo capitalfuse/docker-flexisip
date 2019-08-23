@@ -1,8 +1,14 @@
-# The Dockerfile to build the docker image for sip server flexisip on Ubuntu 18.04
+# The Dockerfile to build the docker image for sip server flexisip on Ubuntu 18.04 and Debian9 Stretch
 
-ex) How to build the Docker image for flexisip from the Dockerfile
+***How to build the Docker image for flexisip from the Dockerfile for Ubuntu***
+
 ```
 $ docker build --squash --no-cache -t linphone/flexisip:20190808 .
+```
+
+Run docker container
+```
+$ docker run -dti --network host --name linphone_flexisip linphone/flexisip:20190808
 ```
 
 ***Build Options: Add options formatted as "-DENABLE_XXX=??" into the potition following "./prepare.py" at the "#get source code" section.***
@@ -26,5 +32,41 @@ RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DCMAKE_PREFIX_P
   -DENABLE_EXTERNAL_AUTH_PLUGIN=YES 
   -DENABLE_SOCI=YES"
 ```
+
+***How to build the Docker image for flexisip from the Dockerfile for debian***
+
+It is more easier way than making an image for Ubuntu because of being prepared the binaries of the flexisip for Debian.
+```
+$ cd debian
+$ make flexisip-deb-build
+``` 
+
+Run docker container
+```
+$ docker run -dti --network host --name debian_flexisip gitlab.linphone.org:4567/bc/public/flexisip:debian20190822-deb 
+
+go into the container
+```
+$ docker exec -ti debian_flexisip bash
+```
+
+Check flexisip version and compiled options
+``` 
+/opt/belledonne-communications# flexisip -v
+
+flexisip  version: 1.0.13 (git: 1.0.13-256-gd3c516aa)
+sofia-sip version 1.13.35bc
+
+Compiled with:
+- SNMP
+- Transcoder
+- Redis
+- Soci
+- Protobuf
+- Presence
+- Conference
+
+```
+
 **Reference**
 https://github.com/BelledonneCommunications/flexisip
