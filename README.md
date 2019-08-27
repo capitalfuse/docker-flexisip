@@ -43,13 +43,18 @@ $ make flexisip-deb-build
 
 Run docker container
 ```
-$ docker run -dti --network host --name debian_flexisip gitlab.linphone.org:4567/bc/public/flexisip:debian20190822-deb 
+docker run -dti --cap-add=NET_ADMIN --cap-add=NET_RAW --network host --name debian_flexisip docker_image_ID
 ```
+"--cap-add=NET_ADMIN" and "--cap-add=NET_RAW" need for running the internal iptables command.
 
 go into the container
 ```
 $ docker exec -ti debian_flexisip bash
 ```
+If you need snmp, implement the following command inside the container:
+```
+# /etc/init.d/snmpd start
+``
 
 Check flexisip version and compiled options
 ``` 

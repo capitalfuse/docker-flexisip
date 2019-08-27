@@ -1,15 +1,22 @@
 FROM debian:stretch
-MAINTAINER  Jehan Monnier <jehan.monnier@linphone.org>
+MAINTAINER  Takanobu Fuse <ficus.online@gmail.com>
 
-# Prepare dependencies
+# Prepare dependencies and utils
 RUN apt-get update
-RUN apt-get install -y  xsdcxx gdb libmariadbclient-dev wget gnupg gnupg1 gnupg2
+RUN apt-get install -y xsdcxx gdb 
+RUN apt-get install -y libmariadbclient-dev wget gnupg gnupg1 gnupg2 logrotate htop nano snmp snmpd iptables net-tools && \
+    apt-get autoremove -y && \
+    apt-get clean
 
 # Get flexisip package
 RUN echo "deb [arch=amd64] http://linphone.org/snapshots/debian stretch main" > /etc/apt/sources.list.d/belledonne.list
 RUN wget https://linphone.org/snapshots/debian/keyring.gpg -O - | apt-key add -
-RUN apt-get update && apt-get install -y bc-flexisip
-
+RUN apt-get update 
+RUN apt-get install -y bc-flexisip
+RUN apt-get install -y bc-jose bc-soci-mysql bc-flexisip-external-auth-plugin bc-flexisip-jwe-auth-plugin && \
+    apt-get autoremove -y && \
+    apt-get clean
+    
 # Add it to the default path
 ENV PATH=$PATH:/opt/belledonne-communications/bin
 
@@ -22,6 +29,8 @@ VOLUME /etc/opt/belledonne-communications/flexisip
 VOLUME /var/opt/belledonne-communications/log/flexisip
 COPY flexisip-entrypoint.sh /
 COPY backtrace.gdb /
+COPY snmp.conf /etc/snmp/snmp.conf
+COPY snmpd.conf /etc/snmpd.conf
 RUN chmod a+x /flexisip-entrypoint.sh
 
 # Script to wait db before launch flexisip [Licence Apache2]

@@ -1,7 +1,7 @@
 BASE_NAME=gitlab.linphone.org:4567/bc/public/flexisip
 #$(eval GIT_DESCRIBE = $(shell sh -c "git describe"))
 # DOCKER_TAG=$(BASE_NAME):$(GIT_DESCRIBE)
-DOCKER_TAG=$(BASE_NAME):debian20190822
+DOCKER_TAG=$(BASE_NAME):20190827
 DOCKER_FILE=flex-from-src
 
 flexisip-build:
