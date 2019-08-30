@@ -1,0 +1,36 @@
+FROM ubuntu:18.04
+MAINTAINER  Takanobu Fuse <ficus.online@gmail.com>
+
+# Prepare dependencies
+RUN apt-get update && \
+    apt-get install -y  xsdcxx gdb libmariadb3 nano net-tools iptables snmp snmpd snmp-mibs-downloader && \
+    apt-get autoremove -y && \
+    apt-get clean
+
+# Get flexisip package
+COPY DEBS/*.deb /deb-packages/
+RUN apt-get install -y /deb-packages/bc-*.deb && \
+    rm -rf /deb-packages
+
+# Add it to the default path
+ENV PATH=$PATH:/opt/belledonne-communications/bin
+
+WORKDIR /opt/belledonne-communications
+
+# Generate a default configuration
+RUN flexisip --dump-default all > /etc/flexisip/flexisip.conf
+
+VOLUME /etc/opt/belledonne-communications/flexisip
+VOLUME /var/opt/belledonne-communications/log/flexisip
+COPY flexisip-entrypoint.sh /
+COPY backtrace.gdb /
+COPY snmp.conf /etc/snmp/snmp.conf
+COPY snmpd.conf /etc/snmp/snmpd.conf
+RUN chmod a+x /flexisip-entrypoint.sh
+
+# Script to wait db before launch flexisip [Licence Apache2]
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
+RUN chmod +x /wait
+
+ENTRYPOINT ["/flexisip-entrypoint.sh"]
+CMD flexisip
