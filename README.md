@@ -1,62 +1,81 @@
-# The Dockerfile to build the docker image for sip server flexisip on Ubuntu 18.04 and Debian9 Stretch
 
-***How to build the Docker image for flexisip from the Dockerfile for Ubuntu***
+# Dockerfile to build the docker image of flexisip for Ubuntu 18.04 and Debian 9 Stretch 
 
-```
-$ docker build --squash --no-cache -t linphone/flexisip:20190808 .
-```
+**How to build the Docker image of flexisip from the Dockerfile**
 
-Run docker container
-```
-$ docker run -dti --network host --name linphone_flexisip linphone/flexisip:20190808
-```
+***debian image***
 
-***Build Options: Add options formatted as "-DENABLE_XXX=??" into the potition following "./prepare.py" at the "#get source code" section.***
-```
-#get source code
-RUN git clone https://gitlab.linphone.org/BC/public/flexisip.git --recursive --depth 1
-RUN cd flexisip && ./prepare.py flexisip -DENABLE_TRANSCODER=ON -DCMAKE_PREFIX_PATH=/opt/belledonne-communications -DCMAKE_INSTALL_PREFIX=/opt/belledonne-communications -DSYSCONF_INSTALL_DIR=/etc && make
-```
-```
-  -DENABLE_REDIS=YES 
-  -DENABLE_TRANSCODER=YES 
-  -DENABLE_UNIT_TESTS=OFF 
-  -DENABLE_SOCI=YES 
-  -DENABLE_PRESENCE=YES 
-  -DENABLE_CONFERENCE=YES 
-  -DENABLE_SNMP=YES 
-  -DENABLE_DOC=OFF 
-  -DENABLE_PROTOBUF=YES 
-  -DENABLE_MDNS=NO 
-  -DENABLE_JWE_AUTH_PLUGIN=YES 
-  -DENABLE_EXTERNAL_AUTH_PLUGIN=YES 
-  -DENABLE_SOCI=YES"
-```
-
-***How to build the Docker image for flexisip from the Dockerfile for debian***
-
-It is more easier way than making an image for Ubuntu because of being prepared the binaries of the flexisip for Debian.
 ```
 $ cd debian
 $ make flexisip-deb-build
-``` 
+```
+***ubuntu image***
 
-Run docker container
 ```
-docker run -dti --cap-add=NET_ADMIN --cap-add=NET_RAW --network host --name debian_flexisip docker_image_ID
+$ cd docker-compose-ubuntu
+$ make flexisip-ubuntu-build
 ```
-"--cap-add=NET_ADMIN" and "--cap-add=NET_RAW" need for running the internal iptables command.
 
-go into the container
+***Run docker container***
+
 ```
-$ docker exec -ti debian_flexisip bash
+$ docker run -dti --network host --name Container_Name [REPOSITORY:TAG or IMAGE_ID]
 ```
-If you need snmp, implement the following command inside the container:
+#
+# Run docker container with other containers(MariaDB) by docker-compose file under nginx-proxy
+
+**STEP 1 - Run enginx-proxy container**
+```
+$ docker run --detach \
+    --name nginx-proxy \
+    --publish 80:80 \
+    --publish 443:443 \
+    --volume /etc/nginx/certs \
+    --volume /etc/nginx/vhost.d \
+    --volume /usr/share/nginx/html \
+    --volume /var/run/docker.sock:/tmp/docker.sock:ro \
+    jwilder/nginx-proxy
+```
+**STEP 2 - letsencrypt-nginx-proxy-companion**
+```
+$ docker run --detach \
+    --name nginx-proxy-letsencrypt \
+    --volumes-from nginx-proxy \
+    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+    --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
+    jrcs/letsencrypt-nginx-proxy-companion
+```
+
+**Step 3 - proxyed container(s)**
+
+**In the folder docker-compose file exists**
+
+```
+$ docker-compose up -d
+```
+#
+**Confirm docker container network**
+```
+$ docker network inspect nginx-proxy
+```
+
+#
+**Go into the container**
+```
+$ docker exec -ti Container_Name bash
+```
+
+**If you need snmp, implement the following command inside the container:**
 ```
 # /etc/init.d/snmpd start
-``
+```
+**Or restart the container with the exec command**
+```
+$ docker container restart Container_Name && docker exec -it Container_Name /etc/init.d/snmpd start
 
-Check flexisip version and compiled options
+```
+
+**Show flexisip version and compiled options**
 ``` 
 /opt/belledonne-communications# flexisip -v
 
@@ -74,5 +93,16 @@ Compiled with:
 
 ```
 
-**Reference**
+**Reference** 
+
+Flexisip
 https://github.com/BelledonneCommunications/flexisip
+
+nginx-proxy
+https://github.com/jwilder/nginx-proxy
+
+LetsEncrypt companion container for nginx-proxy
+https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion
+
+Also please check my homepage(flexisip.conf, database table and so on)
+https://ficus.myvnc.com
