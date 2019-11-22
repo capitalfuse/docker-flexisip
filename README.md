@@ -1,7 +1,7 @@
 
 # Dockerfile to build the docker image of flexisip for Ubuntu 18.04 and Debian 9 Stretch 
 
-![schema](docker-nginx-proxy.png)
+![schema](docker-compose-nginx.png)
 
 **How to build the Docker image of flexisip from the Dockerfile**
 
