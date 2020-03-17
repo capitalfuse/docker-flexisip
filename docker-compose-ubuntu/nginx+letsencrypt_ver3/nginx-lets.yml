@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: jwilder/nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - shared:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - config:/etc/enginx/conf.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    restart: always
+    networks:
+      - proxy-tier
+      
+  nginx-proxy-letsencrypt:
+    container_name: nginx-proxy-letsencrypt
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    depends_on:
+      - "nginx-proxy"
+    volumes:
+      - shared:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - config:/etc/enginx/conf.d
+      - html:/usr/share/nginx/html 
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DEFAULT_EMAIL=ficus.online@gmail.com
+    restart: always
+    networks:
+      - proxy-tier
+
+networks:
+  proxy-tier:
+    external:
+      name: nginx-proxy
+      
+volumes:
+  shared:
+    external: true
+  vhost:
+    external: true
+  config:
+    external: true
+  html:
+    external: true    
+

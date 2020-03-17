@@ -1,0 +1,10 @@
+# This is a comment
+prefix=/opt/belledonne-communications
+exec_prefix=/opt/belledonne-communications
+
+Name:  bctoolbox
+Description: A common set of tools used by Belledonne Communication's softwares
+Version: 4.3.0
+Libs: -L/opt/belledonne-communications/lib -lbctoolbox
+Libs.private:  /opt/belledonne-communications/lib/libmbedtls.so /opt/belledonne-communications/lib/libmbedx509.so /opt/belledonne-communications/lib/libmbedcrypto.so
+Cflags: -I/opt/belledonne-communications/include

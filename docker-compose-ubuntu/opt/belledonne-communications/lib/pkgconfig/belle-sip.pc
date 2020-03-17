@@ -1,0 +1,13 @@
+# This is a comment
+prefix=/opt/belledonne-communications
+exec_prefix=/opt/belledonne-communications/bin
+includedir=/opt/belledonne-communications/include
+
+Name: belle-sip 
+Description: A c based implementation of the SIP (RFC 3261)  telephony protocol 
+Requires: bctoolbox
+Requires.private:  
+Version: 4.3.0
+Libs: -L/opt/belledonne-communications/lib -lbellesip
+Libs.private: 
+Cflags: -I/opt/belledonne-communications/include 

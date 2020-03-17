@@ -1,9 +1,24 @@
 version: '3'
 
 services:
+  flexisip-mariadb:
+    container_name: flexisip-mariadb
+    image: mariadb
+    restart: always
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=db_passowrd
+      - MYSQL_DATABASE=flexisip
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=db_password
+    networks:
+      proxy-tier:
+        ipv4_address: 172.18.0.4
+
   ubuntu-flexisip:
     container_name: ubuntu-flexisip
-    image: gitlab.linphone.org:4567/bc/public/flexisip:20190827-ubuntu
+    image: bc-flexisip:20200314-ubuntu
     ports:
      #### If you aren't using a reverse proxy
      #- 80:80
@@ -14,47 +29,115 @@ services:
       - 10000-10500:10000-10500/udp
      #### STUN Server
       - 3478:3478/udp
-
-    environment: 
-      - VIRTUAL_HOST=your_host.com
-     # - VIRTUAL_NETWORK=nginx-proxy
-     ### If you want to connect to the SSL Enabled Container 
-     #- VIRTUAL_PORT=443
-     #- VIRTUAL_PROTO=https
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=your_host.com
-      - LETSENCRYPT_EMAIL=your_mail_address@gmail.com
     
+    volumes:
+      - shared:/etc/flexisip/tls
+      - ./config:/etc/flexisip
+       
      ### If you are using TLS Support for Apache to listen on 443 in the container drop them in /certs and set these:
      #- TLS_CERT=cert.pem
      #- TLS_KEY=key.pem
-     
+    depends_on:
+      - nginx
+      - flexisip-mariadb
     restart: always
     networks:
-      - proxy-tier
+      proxy-tier:
+        ipv4_address: 172.18.0.5
 
     ### These final lines are for Fail2ban. If you don't want, comment and also add ENABLE_FAIL2BAN=FALSE to your environment
     cap_add:
       - NET_ADMIN
     privileged: true
-    
-  flexisip-mariadb:
-    container_name: flexisip-mariadb
-    image: mariadb
-    restart: always
-    volumes:
-      - ./db:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=your_database
-      - MYSQL_USER=your_user_name
-      - MYSQL_PASSWORD=user_password
-    networks:
-      - proxy-tier
 
+  # nginx, additional install $ docker exec nginx apk add bash nano
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    tty: true
+    environment:
+      - VIRTUAL_HOST=www.yourhost.com
+      - VIRTUAL_ROOT=/var/www/html
+      - VIRTUAL_PORT=80
+      # - VIRTUAL_PROTO=fastcgi
+      - LETSENCRYPT_HOST=www.yourhost.com
+      - LETSENCRYPT_EMAIL=yourhost@gmail.com
+    volumes:
+      # shared nginx default.conf between host and container
+      - ./nginx_default.conf:/etc/nginx/conf.d/default.conf
+      # shared the directory /var/www/html in php-fpm container
+      - ./html:/var/www/html/register
+      # shared the directory /var/www/html in phpmysql-fpm container
+      - ./phpmyadmin_data:/var/www/html/phpmyadmin
+      # for flexisip-account-manager
+      - ./flexisip-account-manager:/var/www/html/flexisip-account-manager
+    external_links:
+      - nginx-proxy-letsencrypt
+    restart: always
+    networks:
+      proxy-tier:
+        ipv4_address: 172.18.0.6
+
+  # php-fpm, additional install $ docker exec php-fpm apk add bash nano
+  # php extension mysqli should be installed, $ docker exec php-fpm docker-php-ext-install mysqli
+  # for Userfrosting, install followings.
+  # apk add libpng-dev freetype-dev libjpeg-turbo-dev zip
+  # docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+  # docker-php-ext-install -j$(nproc) gd
+  # docker-php-ext-install -j$(nproc) pdo pdo_mysql
+  # docker-php-ext-install -j$(nproc) zip
+  php-fpm:
+    container_name: php-fpm
+    build: 
+      context: ./docker_files
+      dockerfile: php7.2-fpm-alpine      
+    tty: true
+    expose: 
+      - "9000"
+    volumes:
+      - ./html:/var/www/html/register
+      # for flexisip-account-manager. install # apk add libxml2-dev, # docker-php-ext-install xmlrpc
+      - ./flexisip-account-manager:/var/www/html/flexisip-account-manager
+      - ./etc/flexisip-account-manager:/etc/flexisip-account-manager
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks:
+      proxy-tier:
+        ipv4_address: 172.18.0.7
+
+  # phpmyadmin-fpm, additional install $ docker exec phpmyadmin-fpm apk add bash nano 
+  # php extension mysqli should be installed, $ docker exec phpmyadmin-fpm docker-php-ext-install mysqli
+  phpmyadmin:
+    container_name: phpmyadmin-fpm
+    build: 
+      context: ./docker_files
+      dockerfile: phpmyadmin-alpine
+    tty: true
+    expose: 
+      - "9000"
+    environment:
+      - PMA_HOST=flexisip-mariadb
+      - PMA_PORT=3306
+      - PMA_ABSOLUTE_URI=http://localhost/phpmyadmin
+    volumes:
+      - ./phpmyadmin_data:/var/www/html
+      - /sessions
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks:
+      proxy-tier:
+        ipv4_address: 172.18.0.8
 
 networks:
   proxy-tier:
     external:
       name: nginx-proxy
+
+volumes:
+  shared:
+    external: true   
+
+
 

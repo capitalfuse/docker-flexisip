@@ -1,36 +1,41 @@
 FROM ubuntu:18.04
 MAINTAINER  Takanobu Fuse <ficus.online@gmail.com>
 
-# Prepare dependencies
+# Prepare dependencies, Install linphone & flexisip dependencies development packages
 RUN apt-get update && \
-    apt-get install -y  xsdcxx gdb libmariadb3 nano net-tools iptables snmp snmpd snmp-mibs-downloader && \
+    apt-get install -y xsdcxx gdb libmariadb3 nano net-tools iptables snmp snmpd snmp-mibs-downloader \
+    libasound2-dev  libpulse-dev libprotobuf-dev  && \
     apt-get autoremove -y && \
-    apt-get clean
+    apt-get clean && \
+    mkdir /etc/flexisip && \
+    mkdir -p /etc/opt/belledonne-communications/flexisip && \
+    mkdir -p /var/opt/belledonne-communications/log/flexisip
 
 # Get flexisip package
-COPY DEBS/*.deb /deb-packages/
-RUN apt-get install -y /deb-packages/bc-*.deb && \
-    rm -rf /deb-packages
+COPY opt/ /opt/
 
 # Add it to the default path
 ENV PATH=$PATH:/opt/belledonne-communications/bin
+ENV LD_LIBRARY_PATH=/opt/belledonne-communications/lib
 
 WORKDIR /opt/belledonne-communications
 
 # Generate a default configuration
+# COPY config/flexisip.conf /etc/flexisip/flexisip.conf
 RUN flexisip --dump-default all > /etc/flexisip/flexisip.conf
 
 VOLUME /etc/opt/belledonne-communications/flexisip
 VOLUME /var/opt/belledonne-communications/log/flexisip
 COPY flexisip-entrypoint.sh /
+COPY flexisip-snmpd.sh /
 COPY backtrace.gdb /
 COPY snmp.conf /etc/snmp/snmp.conf
 COPY snmpd.conf /etc/snmp/snmpd.conf
-RUN chmod a+x /flexisip-entrypoint.sh
+RUN chmod a+x /flexisip-entrypoint.sh /flexisip-snmpd.sh
 
 # Script to wait db before launch flexisip [Licence Apache2]
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
 RUN chmod +x /wait
 
 ENTRYPOINT ["/flexisip-entrypoint.sh"]
-CMD flexisip
+CMD ["/flexisip-snmpd.sh"]

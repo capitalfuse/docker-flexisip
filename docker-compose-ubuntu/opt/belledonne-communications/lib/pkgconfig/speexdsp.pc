@@ -1,0 +1,15 @@
+# libspeexdsp pkg-config source file
+
+prefix=/opt/belledonne-communications
+exec_prefix=/opt/belledonne-communications/bin
+libdir=/opt/belledonne-communications/lib
+includedir=/opt/belledonne-communications/include
+
+Name: speexdsp
+Description: Speexdsp is a speech processing library that goes along with the Speex codec
+Version: 1.2rc1
+Requires: 
+Conflicts:
+Libs: -L/opt/belledonne-communications/lib -lspeexdsp
+Libs.private: -lm
+Cflags: -I/opt/belledonne-communications/include

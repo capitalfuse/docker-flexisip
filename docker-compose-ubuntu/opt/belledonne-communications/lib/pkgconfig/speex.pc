@@ -1,0 +1,15 @@
+# libspeex pkg-config source file
+
+prefix=/opt/belledonne-communications
+exec_prefix=/opt/belledonne-communications/bin
+libdir=/opt/belledonne-communications/lib
+includedir=/opt/belledonne-communications/include
+
+Name: speex
+Description: Speex is an audio codec tuned for speech
+Version: 1.2rc1
+Requires:
+Conflicts:
+Libs: -L/opt/belledonne-communications/lib -lspeex
+Libs.private: -lm
+Cflags: -I/opt/belledonne-communications/include

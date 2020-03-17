@@ -1,0 +1,10 @@
+# This is a comment
+prefix=/opt/belledonne-communications
+exec_prefix=/opt/belledonne-communications/bin
+includedir=/opt/belledonne-communications/include
+
+Name: oRTP 
+Description: Implement the RFC3550 (RTP) with a easy to use API with high and low level access.
+Version: 4.3.0
+Libs: -L/opt/belledonne-communications/lib -lortp 
+Cflags: -I/opt/belledonne-communications/include 
