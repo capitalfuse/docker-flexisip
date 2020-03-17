@@ -9,13 +9,17 @@
 
 ```
 $ cd debian
-$ make flexisip-deb-build
+$ sudo make flexisip-deb-build
 ```
 ***ubuntu image***
 
 ```
+$ cd nginx+letsencrypt_ver3
+$ docker-compose up -f nginx-lets.yml -d
+$ cd ..
 $ cd docker-compose-ubuntu
-$ make flexisip-ubuntu-build
+$ sudo make flexisip-ubuntu-build
+$ docker-compose up -d
 ```
 
 ***Run docker container***
