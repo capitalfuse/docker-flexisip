@@ -1,0 +1,73 @@
+CONNECTION ESTABLISHED
+root@d0c4f9d2e779:/opt/belledonne-communications# netstat -antpu
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:38039        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.16.0.6:5060         0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 172.16.0.6:5061         0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 127.0.0.1:5065          0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 172.16.0.6:5061         133.106.245.48:40072    ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57206        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:5061         219.100.37.241:38951    ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57202        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:5060         172.16.0.1:57088        ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57174        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+        
+tcp        0      0 127.0.0.1:5065          172.16.0.6:45429        ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57214        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:60390        172.16.0.2:6379         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57190        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:45716        192.168.1.137:5060      ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57192        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:60392        172.16.0.2:6379         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57234        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:45429        127.0.0.1:5065          ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57228        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+udp        0      0 0.0.0.0:10256           0.0.0.0:*                           8/flexisip          
+udp        0      0 0.0.0.0:10257           0.0.0.0:*                           8/flexisip          
+udp        0      0 127.0.0.11:35901        0.0.0.0:*                           -                   
+udp        0      0 0.0.0.0:3478            0.0.0.0:*                           8/flexisip          
+udp        0      0 172.16.0.6:5060         0.0.0.0:*                           8/flexisip          
+udp        0      0 0.0.0.0:10104           0.0.0.0:*                           8/flexisip          
+udp        0      0 0.0.0.0:10105           0.0.0.0:*                           8/flexisip          
+
+DISCONNECTION
+root@d0c4f9d2e779:/opt/belledonne-communications# netstat -antpu
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.11:38039        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.16.0.6:5060         0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 172.16.0.6:5061         0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 127.0.0.1:5065          0.0.0.0:*               LISTEN      8/flexisip          
+tcp        0      0 172.16.0.6:5061         133.106.245.48:40072    ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57206        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:5061         219.100.37.241:38951    ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57202        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:5060         172.16.0.1:57088        ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57174        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 127.0.0.1:5065          172.16.0.6:45429        ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57214        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:60390        172.16.0.2:6379         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57190        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:45716        192.168.1.137:5060      ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57192        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:60392        172.16.0.2:6379         ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57234        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+tcp        0      0 172.16.0.6:45429        127.0.0.1:5065          ESTABLISHED 8/flexisip          
+tcp        0      0 172.16.0.6:57228        172.16.0.5:3306         ESTABLISHED 8/flexisip          
+         
+udp        0      0 127.0.0.11:35901        0.0.0.0:*                           -                   
+udp        0      0 0.0.0.0:3478            0.0.0.0:*                           8/flexisip          
+udp        0      0 172.16.0.6:5060         0.0.0.0:*                           8/flexisip          

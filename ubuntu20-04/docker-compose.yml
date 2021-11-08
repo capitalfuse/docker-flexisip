@@ -1,0 +1,169 @@
+version: '3'
+
+services:
+##### redis-server
+  redis:
+    container_name: redis
+    build: 
+      context: ./docker_files
+      dockerfile: redis-alpine
+    # need to download default config file:redis.conf from https://redis.io/topics/config
+    # then modify it to enable the auth access(password), and input it into /redis/etc directory.
+    # NOTE: maybe no need to run with redis.conf, because of it is running only inside the docker network.
+    # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. 
+    # To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or 
+    # run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    privileged: true
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.2
+
+##### nginx
+  # after "docker-compose up -d", enter the container and execute the following commands. 
+  # "certbot certonly --standalone --agree-tos -n -m ficus.online@gmail.com -d ficus-home.duckdns.org"
+  # or
+  # "certbot --nginx --agree-tos -n -m ficus.online@gmail.com -d ficus-home.duckdns.org"
+  # then
+  # "cd /etc/letsencrypt/live/ficus-home.duckdns.org"
+  # "cp fullchain.pem cafile.pem"
+  # "awk 1 privkey.pem cert.pem > agent.pem"
+  nginx:
+    container_name: nginx
+    build: 
+      context: ./docker_files
+      dockerfile: nginx-alpine
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # nginx config
+      - ./nginx:/etc/nginx/conf.d
+      # certbot letsencrypt certification
+      - letsencrypt:/etc/letsencrypt
+      # shared the directory /var/www/html in php-fpm container
+      - ./html:/var/www/html
+      # shared the directory /var/www/html in phpmysql-fpm container
+      - phpmyadmin:/var/www/html/phpmyadmin
+      # for flexisip-account-manager
+      #- ./flexisip-account-manager:/var/www/html/flexisip-account-manager
+    depends_on:
+      - phpmyadmin-fpm
+      - php-fpm-laravel
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.3        
+
+##### mariadb
+  flexisip-mariadb:
+    container_name: flexisip-mariadb
+    image: mariadb
+    restart: always
+    volumes:
+      - ./db:/var/lib/mysql
+      - ./mariadb:/etc/mysql/conf.d
+    # refer to .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.5
+
+### flexisip
+  ubuntu-flexisip:
+    container_name: ubuntu-flexisip
+    image: gitlab.linphone.org:4567/bc/public/flexisip:2.1.0-beta-14-g0ba5e300-deb
+    ports:
+      - 5060-5061:5060-5061
+      #### Presence-Server
+      - 5065:5065
+      #### Conference and RegEvent Server
+      - 6064-6065:6064-6065
+      - 10000-10050:10000-10050/udp
+      #### STUN Server
+      - 3478:3478/udp   
+    volumes:
+      - letsencrypt:/etc/flexisip/tls
+      # previously need to add "flexisip" directory and input "flexisip.conf" into it.
+      - ./flexisip:/etc/flexisip
+    depends_on:
+      - nginx
+      - flexisip-mariadb
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.6
+    ## allow the privilege of network to the container
+    #ulimits:
+    #  nofile:
+    #    soft: 200
+    #    hard: 400
+    cap_add:
+      - NET_ADMIN
+    #  - SYS_RESOURCE
+    privileged: true
+    
+##### phpmyadmin-fpm
+  phpmyadmin-fpm:
+    container_name: phpmyadmin-fpm
+    build: 
+      context: ./docker_files
+      dockerfile: phpmyadmin-alpine
+    tty: true
+    expose: 
+      - "9000"
+    environment:
+      - PMA_HOST=flexisip-mariadb
+      - PMA_PORT=3306
+      - PMA_ABSOLUTE_URI=http://localhost/phpmyadmin
+    volumes:
+      - phpmyadmin:/var/www/html
+      - /sessions
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.7
+        
+##### php-fpm-laravel
+  php-fpm-laravel:
+    container_name: php-fpm-laravel
+    build: 
+      context: ./docker_files
+      dockerfile: php-fpm-alpine-laravel      
+    tty: true
+    expose: 
+      - "9000"
+    # "php artisan serve" commmand default port
+    ports:
+      - 8000:8000
+    volumes:
+      # for laravel php framework
+      - ./html:/var/www/html
+      - ./etc/conf:/etc/flexisip-account-manager
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.16.0.8
+
+### $ docker network create --gateway 172.16.0.1 --subnet 172.16.0.0/24 nginx-proxy
+networks:
+  proxy-tier:
+    external:
+      name: nginx-proxy
+
+### $ docker volume create phpmyadmin letsencrypt     
+volumes:
+  phpmyadmin:
+    external: true
+  letsencrypt:
+    external: true

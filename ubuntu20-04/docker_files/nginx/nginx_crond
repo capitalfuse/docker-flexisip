@@ -1,0 +1,4 @@
+#!/bin/sh
+certbot renew
+# certbot --nginx --agree-tos -n -d ficus-home.duckdns.org -m ficus.online@gmail.com
+nginx -s reload

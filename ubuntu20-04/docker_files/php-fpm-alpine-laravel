@@ -1,0 +1,27 @@
+FROM php:7.4-fpm-alpine
+
+# Set working directory
+WORKDIR /var/www/html  
+
+RUN apk add --no-cache bash nano libpng-dev freetype-dev libjpeg-turbo-dev libxml2-dev \
+    && docker-php-ext-install mysqli xmlrpc \
+    && docker-php-ext-enable mysqli xmlrpc \
+    && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql \
+    && docker-php-ext-enable gd pdo pdo_mysql
+
+# Installing composer
+COPY composer_installer.sh /var/www/html
+RUN echo 'precedence ::ffff:0:0/96 100' >> /etc/gai.conf \
+    && ./composer_installer.sh && mv composer.phar /usr/local/bin/composer
+
+# Installing Laravel
+RUN chown -R www-data:www-data /var/www/html
+RUN composer global require laravel/installer \
+    && ln -s /root/.config/composer/vendor/laravel/installer/bin/laravel /usr/local/bin/laravel
+
+# Make the log directory and the log file for flexisip-account-manager    
+RUN mkdir -p /var/opt/belledonne-communications/log \
+    && cd /var/opt/belledonne-communications/log \
+    && touch account-manager.log \
+    && chown www-data:www-data account-manager.log

@@ -1,3 +1,10 @@
 # ignore ubuntu folder for git
 
 ubuntu/
+ubuntu20-04/.env/
+ubuntu20-04/db/
+ubuntu20-04/html/
+ubuntu20-04/flexisip/
+ubuntu20-04/redis/
+ubuntu20-04/nginx/
+ubuntu20-04/etc/

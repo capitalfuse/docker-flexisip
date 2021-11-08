@@ -1,0 +1,5 @@
+FROM phpmyadmin/phpmyadmin:fpm-alpine
+
+RUN apk add --no-cache bash nano \
+    && docker-php-ext-install mysqli \
+    && docker-php-ext-enable mysqli
