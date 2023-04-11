@@ -1,0 +1,32 @@
+FROM ubuntu:22.04
+MAINTAINER  Takanobu Fuse <ficusonline@gmail.com>
+
+# Prepare dependencies
+RUN apt-get update
+RUN apt-get install -y nano xsdcxx gdb libmariadb3 snmp-mibs-downloader snmp snmpd iproute2 iptables
+
+# Get flexisip package
+COPY *.deb *.ddeb /deb-packages/
+RUN apt-get install -y /deb-packages/*
+RUN rm -rf /deb-packages
+
+# Add it to the default path
+ENV PATH=$PATH:/opt/belledonne-communications/bin
+
+WORKDIR /opt/belledonne-communications
+
+# Generate a default configuration
+RUN flexisip --dump-default all > /etc/flexisip/flexisip.conf
+
+VOLUME /etc/opt/belledonne-communications/flexisip
+VOLUME /var/opt/belledonne-communications/log/flexisip
+COPY flexisip-entrypoint.sh /
+COPY backtrace.gdb /
+RUN chmod a+x /flexisip-entrypoint.sh
+
+# Script to wait db before launch flexisip [Licence Apache2]
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
+RUN chmod +x /wait
+
+ENTRYPOINT ["/flexisip-entrypoint.sh"]
+CMD flexisip

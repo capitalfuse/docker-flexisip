@@ -1,0 +1,21 @@
+FROM php:fpm-alpine
+# Set working directory
+WORKDIR /var/www/html
+
+RUN apk add --no-cache bash nano libpng-dev freetype-dev libjpeg-turbo-dev libxml2-dev
+
+# Install Composer and PHP extensions
+# https://github.com/mlocati/docker-php-extension-installer
+# https://hub.docker.com/_/php
+RUN curl -sSLf \
+        -o /usr/local/bin/install-php-extensions \
+        https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions && \
+    chmod +x /usr/local/bin/install-php-extensions && \
+    install-php-extensions redis mysqli xmlrpc pdo_mysql @composer && \
+    IPE_GD_WITHOUTAVIF=1 install-php-extensions gd
+
+# Installing Laravel
+RUN chown -R www-data:www-data /var/www/html
+RUN composer global require laravel/installer \
+    && ln -s /root/.config/composer/vendor/laravel/installer/bin/laravel /usr/local/bin/laravel
+

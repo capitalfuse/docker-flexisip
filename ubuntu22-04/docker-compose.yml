@@ -1,0 +1,180 @@
+version: '3.5'
+
+services:
+##### redis-server
+  redis:
+    container_name: redis
+    image: redis:alpine
+    volumes:
+        - ./redis:/etc/redis
+    ports:
+      - 6379:6379
+    # need to download default config file:redis.conf from https://redis.io/topics/config
+    # then modify it to enable the auth access(password), and input it into /etc/redis directory.
+    # NOTE: maybe no need to run with redis.conf, because of it is running only inside the docker network.
+    # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. 
+    # To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or 
+    # run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    privileged: true
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.19.0.2
+        ipv6_address: fd6c:dfc7:8a45:1::2
+
+##### nginx
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    tty: true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      # nginx config
+      - ./nginx:/etc/nginx/conf.d
+      # certbot letsencrypt certification. Created by docker_hub certbot/certbot ; https://hub.docker.com/r/certbot/certbot
+      # $ docker run -it --rm --name certbot -v "$PWD/letsencrypt:/etc/letsencrypt" -p 80:80 certbot/certbot certonly --standalone -d www.example.com
+      # Add the below cronjob into the host crontab.
+      # docker run -it --rm --name certbot -v "/??/??/.../letsencrypt:/etc/letsencrypt" -p 80:80 certbot/certbot renew
+      - ./letsencrypt:/etc/letsencrypt
+      # shared the directory /flexisip-account-manager in php-fpm-laravel container
+      - ./flexisip-account-manager/flexiapi:/var/www/html/flexiapi
+      # shared the directory /var/www/html in phpmysql-fpm container
+      - phpmyadmin:/var/www/html/phpmyadmin
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.19.0.3
+        ipv6_address: fd6c:dfc7:8a45:1::3        
+
+##### mariadb
+  flexisip-mariadb:
+    container_name: flexisip-mariadb
+    image: mariadb
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db:/var/lib/mysql
+    #  - ./mariadb:/etc/mysql/conf.d
+    # refer to .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.19.0.5
+        ipv6_address: fd6c:dfc7:8a45:1::5
+
+### flexisip
+  ubuntu-flexisip:
+    container_name: ubuntu-flexisip
+    image: gitlab.linphone.org:4567/bc/public/flexisip:2.3.0-alpha-29-gb19a1ce5-deb  
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      # previously need to add "flexisip" directory and input "flexisip.conf" into it.
+      - ./flexisip_conf:/etc/flexisip
+      # for conference server linphone db directory
+      - ./linphone:/root/.local/share/linphone
+    extra_hosts:
+      - "ficus-home.myvnc.com:192.168.10.110"
+    depends_on:
+      - redis
+      - nginx
+      - flexisip-mariadb
+    restart: always
+    # https://github.com/BelledonneCommunications/flexisip/blob/master/docker/flexisip-entrypoint.sh
+    # for starting only "proxy" server
+    #command: ["--server","proxy"]
+    # for starting "proxy, presence, conference" servers
+    command: [""]
+    ## allow the privilege of network to the container
+    #ulimits:
+    #  nofile:
+    #    soft: 200
+    #    hard: 400
+    cap_add:
+      - NET_ADMIN
+      - SYS_RESOURCE
+    #privileged: true
+    # for conference server? https://wiki.linphone.org/xwiki/wiki/public/view/Flexisip/C.%20Features/Conference%20server/
+    #devices:
+    #  - "/dev/snd:/dev/snd"
+    network_mode: "host"
+    
+##### phpmyadmin-fpm
+  phpmyadmin-fpm:
+    container_name: phpmyadmin-fpm
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    tty: true
+    expose: 
+      - "9000"
+    environment:
+      - PMA_HOST=flexisip-mariadb
+      - PMA_PORT=3306
+      - PMA_ABSOLUTE_URI=http://localhost/phpmyadmin
+    volumes:
+      - phpmyadmin:/var/www/html
+      - /sessions
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.19.0.7
+        ipv6_address: fd6c:dfc7:8a45:1::7
+        
+##### php-fpm-laravel
+  php-fpm-laravel:
+    container_name: php-fpm-laravel
+    build: 
+      context: ./docker_files
+      dockerfile: php-fpm-alpine-laravel
+    tty: true
+    expose: 
+      - "9000"
+    # "php artisan serve" commmand default port
+    ports:
+      - 8000:8000
+    volumes:
+      # for laravel php framework
+      - ./flexisip-account-manager/flexiapi:/var/www/html/flexiapi
+      # provisioning default config
+      - ./xmlrpc:/opt/belledonne-communications/share/flexisip-account-manager/xmlrpc
+      # Flexisip-account-manager log
+      - ./log:/var/opt/belledonne-communications/log
+    depends_on:
+      - flexisip-mariadb
+    restart: always
+    networks: 
+      proxy-tier:
+        ipv4_address: 172.19.0.8
+        ipv6_address: fd6c:dfc7:8a45:1::8
+
+### $ docker network create --gateway 172.16.0.1 --subnet 172.16.0.0/24 nginx-proxy
+# For IPv4 only
+# docker network create --gateway 172.18.0.1 --subnet 172.18.0.0/24 containers-network
+
+# For IPv6 network
+# $ date +%s%N
+#   1667828524739484659
+# $ cat /var/lib/dbus/machine-id
+#   610cef4946ed46da8f71dba9d66c67fb
+# $ printf 1667828524739484659610cef4946ed46da8f71dba9d66c67fb | sha1sum
+#   ac4bebe3c52239cffc4909223ac08d16286349e8  -
+# ---> fd + 16:2863:49e8
+# $ docker network create --gateway 172.19.0.1 --gateway fd6c:dfc7:8a45:1::1 --subnet 172.19.0.0/24 --subnet fd6c:dfc7:8a45:1::0/80 --ipv6 containers-network-ipv6
+
+networks:
+  proxy-tier:
+    name: containers-network-ipv6
+    external: true
+
+### $ docker volume create phpmyadmin  
+volumes:
+  phpmyadmin:
+    external: true

@@ -1,114 +1,72 @@
 
-# Dockerfile to build the docker image of flexisip for Ubuntu 18.04 and Debian 9 Stretch 
+# Flexisip server with flexisip-account-manager on ubuntu 22.04 by docker compose file
 
-![schema](docker-compose-nginx.png)
+Confirmed runnning flexisip proxy, conference(only group chat), presence server and the flexisip account manager with IPv6 and IPv4 addresses.
 
-**How to build the Docker image of flexisip from the Dockerfile**
+The attched files may be used only for the purpose of reference. You should have to edit the following related files for running on your machine.
 
-***debian image***
+**Files** 
+* `ubuntu22-04/redis/redis.conf`
+* `ubuntu22-04/flexisip_conf/flexisip.conf`
+* `ubuntu22-04/.env (for docker compose file)`
+* `ubuntu22-04/flexisip-account-manager/.env (flexisip-account-manager,Laravel)`
+* `ubuntu22-04/nginx/nginx.conf`
 
-```
-$ cd debian
-$ sudo make flexisip-deb-build
-```
-***ubuntu image***
+![schema](docker-flexisip-system.png)
 
-```
-$ cd nginx+letsencrypt_ver3
-$ docker-compose up -f nginx-lets.yml -d
-$ cd ..
-$ cd docker-compose-ubuntu
-$ sudo make flexisip-ubuntu-build
-$ docker-compose up -d
-```
-
-***Run docker container***
+## Make flexisip docker image on ubuntu 22.04
 
 ```
-$ docker run -dti --network host --name Container_Name [REPOSITORY:TAG or IMAGE_ID]
-```
-#
-# Run docker container with other containers(MariaDB) by docker-compose file under nginx-proxy
-
-**STEP 1 - Run enginx-proxy container**
-```
-$ docker run --detach \
-    --name nginx-proxy \
-    --publish 80:80 \
-    --publish 443:443 \
-    --volume /etc/nginx/certs \
-    --volume /etc/nginx/vhost.d \
-    --volume /usr/share/nginx/html \
-    --volume /var/run/docker.sock:/tmp/docker.sock:ro \
-    jwilder/nginx-proxy
-```
-**STEP 2 - letsencrypt-nginx-proxy-companion**
-```
-$ docker run --detach \
-    --name nginx-proxy-letsencrypt \
-    --volumes-from nginx-proxy \
-    --volume /var/run/docker.sock:/var/run/docker.sock:ro \
-    --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
-    jrcs/letsencrypt-nginx-proxy-companion
+$ cd docker
+$ make flexisip-ubuntu-deb-build
 ```
 
-**Step 3 - proxyed container(s)**
+**Sample config file**
+`docker/flexisip.conf.sample`
 
-**In the folder docker-compose file exists**
 
-```
-$ docker-compose up -d
-```
-#
-**Confirm docker container network**
-```
-$ docker network inspect nginx-proxy
-```
+## Certbot Let's Encrypt certification
 
-#
-**Go into the container**
-```
-$ docker exec -ti Container_Name bash
-```
-
-**If you need snmp, implement the following command inside the container:**
-```
-# /etc/init.d/snmpd start
-```
-**Or restart the container with the exec command**
-```
-$ docker container restart Container_Name && docker exec -it Container_Name /etc/init.d/snmpd start
+Create the following cert files by docker_hub certbot/certbot:`https://hub.docker.com/r/certbot/certbot`.
 
 ```
-
-**Show flexisip version and compiled options**
-``` 
-/opt/belledonne-communications# flexisip -v
-
-flexisip  version: 1.0.13 (git: 1.0.13-256-gd3c516aa)
-sofia-sip version 1.13.35bc
-
-Compiled with:
-- SNMP
-- Transcoder
-- Redis
-- Soci
-- Protobuf
-- Presence
-- Conference
-
+$ docker run -it --rm --name certbot -v "$PWD/letsencrypt:/etc/letsencrypt" -p 80:80 certbot/certbot certonly --standalone -d www.example.com
 ```
 
-**Reference** 
+Add the below cronjob into the host crontab.
+```
+$ docker run -it --rm --name certbot -v "/??/??/.../letsencrypt:/etc/letsencrypt" -p 80:80 certbot/certbot renew
+```
 
-Flexisip
+## Redis
+
+Need to download default config file:redis.conf from `https://redis.io/topics/config`.
+Then modify it to enable the auth access(password), and input it into `/etc/redis` directory.
+
+**WARNING** If you got the low memory condition issue, 
+To fix this, add 'vm.overcommit_memory = 1' to `/etc/sysctl.conf` and then reboot
+or rebuild redis new image with overwriting `sysctl.conf`.
+
+## Download flexisip-account-manager from github or gitlab
+```
+$ git clone https://gitlab.linphone.org/BC/public/flexisip-account-manager.git
+```
+
+## Execute docker compose 
+
+```
+$ cd ubuntu22-04
+$ docker compose up -d 
+```
+
+## Reference
+
+**Flexisip**
 https://github.com/BelledonneCommunications/flexisip
 
-nginx-proxy
-https://github.com/jwilder/nginx-proxy
+**flexisip-account-manager**
+https://gitlab.linphone.org/BC/public/flexisip-account-manager
 
-LetsEncrypt companion container for nginx-proxy
-https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion
+**Ficusonline Forum(only Japanese)**
+https://ficus-forum.myvnc.com/t/topic/479/15
 
-Also please check my homepage(flexisip.conf, database table and so on)
-https://ficus.myvnc.com
